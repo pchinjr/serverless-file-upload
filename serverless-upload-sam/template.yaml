@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Upload files to S3 via API Gateway
+
+Resources:
+  FileUploadBucket:
+    Type: AWS::S3::Bucket
+  MyApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+  FileUploadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: app.lambdaHandler
+      Runtime: nodejs20.x
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref FileUploadBucket
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref FileUploadBucket
+      Events:
+        FileUploadApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /upload
+            Method: POST
+
+Outputs:
+  FileUploadApi:
+    Description: "API Gateway endpoint URL for file upload"
+    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/prod/upload"
+  FileUploadBucketName:
+    Description: "S3 Bucket for file uploads"
+    Value: FileUploadBucket
