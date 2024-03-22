@@ -18,6 +18,8 @@ Resources:
           AttributeType: S
         - AttributeName: UploadDate
           AttributeType: S
+        - AttributeName: SyntheticKey
+          AttributeType: S
       KeySchema:
         - AttributeName: FileId
           KeyType: HASH
@@ -27,8 +29,10 @@ Resources:
       GlobalSecondaryIndexes:
         - IndexName: UploadDateIndex
           KeySchema:
-            - AttributeName: UploadDate
+            - AttributeName: SyntheticKey
               KeyType: HASH
+            - AttributeName: UploadDate
+              KeyType: RANGE
           Projection:
             ProjectionType: ALL
     DeletionPolicy: Delete

@@ -18,8 +18,9 @@ export const lambdaHandler = async (event) => {
         const params = {
             TableName: process.env.TABLE_NAME,
             IndexName: 'UploadDateIndex',
-            KeyConditionExpression: "UploadDate BETWEEN :startDate AND :endDate",
+            KeyConditionExpression: 'SyntheticKey = :synKeyVal AND UploadDate BETWEEN :startDate AND :endDate',
             ExpressionAttributeValues: {
+                ":synKeyVal": { S: "FileUpload" },
                 ":startDate": { S: `${startDate}T00:00:00Z` },
                 ":endDate": { S: `${endDate}T23:59:59Z` }
             }
