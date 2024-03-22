@@ -24,6 +24,15 @@ Resources:
         - AttributeName: UploadDate
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - IndexName: UploadDateIndex
+          KeySchema:
+            - AttributeName: UploadDate
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
   FileApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -113,6 +122,24 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !GetAtt FileMetadataTable.Arn
+  GetMetadataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/getMetadata
+      Handler: getMetadata.lambdaHandler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref FileMetadataTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref FileMetadataTable
+      Events:
+        GetFileMetadataApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FileApi
+            Path: /metadata
+            Method: GET
 Outputs:
   FileUploadApi:
     Description: API Gateway endpoint URL for file upload

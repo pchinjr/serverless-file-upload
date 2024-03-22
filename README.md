@@ -10,4 +10,4 @@ curl -X POST https://stu0ddbdb5.execute-api.us-east-1.amazonaws.com/prod/upload 
     "contentType": "text/plain"
 }'
 
-curl -X GET "https://your-api-gateway-url/metadata?startDate=2023-03-01&endDate=2023-03-31"
+curl -X GET "https://stu0ddbdb5.execute-api.us-east-1.amazonaws.com/prod/metadata?startDate=2024-03-22&endDate=2024-03-22"

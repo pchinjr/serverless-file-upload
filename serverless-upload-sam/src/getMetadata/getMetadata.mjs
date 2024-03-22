@@ -1,6 +1,4 @@
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
-
-// Initialize DynamoDB client
 const dynamoDBClient = new DynamoDBClient({ region: 'us-east-1' });
 
 export const lambdaHandler = async (event) => {
@@ -19,6 +17,7 @@ export const lambdaHandler = async (event) => {
 
         const params = {
             TableName: process.env.TABLE_NAME,
+            IndexName: 'UploadDateIndex',
             KeyConditionExpression: "UploadDate BETWEEN :startDate AND :endDate",
             ExpressionAttributeValues: {
                 ":startDate": { S: `${startDate}T00:00:00Z` },
