@@ -12,8 +12,7 @@ export const lambdaHandler = async (event) => {
             Item: {
                 FileId: { S: key },
                 UploadDate: { S: uploadDate },
-                FileSize: { N: size.toString() },
-                ContentType: { S: ContentType }
+                FileSize: { N: size.toString() }
             }
         };
 
