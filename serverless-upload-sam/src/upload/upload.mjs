@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 const s3 = new S3Client({region: 'us-east-1'});
 
 export const lambdaHandler = async (event) => {
@@ -8,14 +8,14 @@ export const lambdaHandler = async (event) => {
         const input = {
             "Body": decodedFile,
             "Bucket": process.env.BUCKET_NAME,
-            "Key": body.filename
+            "Key": body.filename,
+            "ContentType": body.contentType
           };
         const command = new PutObjectCommand(input);
-        const response = await s3.send(command);
-        const message = "Praise Cage! " + JSON.stringify(response)
+        const uploadResult = await s3.send(command);
         return {
             statusCode: 200,
-            body: JSON.stringify({ message }),
+            body: JSON.stringify({ message: "Praise Cage!", uploadResult }),
         };
     } catch (err) {
         console.error(err);
