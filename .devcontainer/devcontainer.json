@@ -3,5 +3,13 @@
 	"features": {
 		"ghcr.io/devcontainers/features/aws-cli:1": {},
 		"ghcr.io/audacioustux/devcontainers/aws-sam-cli:1": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"kddejong.vscode-cfn-lint",
+				"amazonwebservices.aws-toolkit-vscode"
+			]
+		}
 	}
 }
