@@ -8,7 +8,7 @@ Resources:
   FileUploadBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${AWS::StackName}-${AWS::Region}-${AWS::AccountId}"
+      BucketName: !Sub ${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
   FileMetadataTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -41,14 +41,6 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: prod
-  WriteMetadataPermission: 
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: "lambda:InvokeFunction"
-      FunctionName: !GetAtt WriteMetadataFunction.Arn
-      Principal: "s3.amazonaws.com"
-      SourceArn: !GetAtt FileUploadBucket.Arn
-      SourceAccount: !Sub ${AWS::AccountId}
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -58,7 +50,7 @@ Resources:
           - Effect: Allow
             Principal:
               Service: lambda.amazonaws.com
-            Action: 'sts:AssumeRole'
+            Action: sts:AssumeRole
       Policies:
         - PolicyName: S3ReadAccess
           PolicyDocument:
@@ -66,21 +58,21 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - 's3:GetObject'
-                  - 's3:ListBucket'
+                  - s3:GetObject
+                  - s3:ListBucket
                 Resource:
-                  - !Sub "arn:aws:s3:::${AWS::StackName}-${AWS::Region}-${AWS::AccountId}*"
+                  - !Sub arn:aws:s3:::${AWS::StackName}-${AWS::Region}-${AWS::AccountId}*
         - PolicyName: DynamoDBWriteAccess
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
-                  - 'dynamodb:PutItem'
-                  - 'dynamodb:UpdateItem'
-                  - 'dynamodb:BatchWriteItem'
-                  - 'dynamodb:DeleteItem'
-                Resource: 
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:DeleteItem
+                Resource:
                   - !GetAtt FileMetadataTable.Arn
         - PolicyName: LambdaCloudWatchLogsPolicy
           PolicyDocument:
@@ -91,7 +83,7 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                Resource: 'arn:aws:logs:*:*:*'
+                Resource: arn:aws:logs:*:*:*
   FileUploadFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -110,9 +102,9 @@ Resources:
             RestApiId: !Ref FileApi
             Path: /upload
             Method: POST
-  WriteMetadataFunction: 
+  WriteMetadataFunction:
     Type: AWS::Serverless::Function
-    Properties: 
+    Properties:
       CodeUri: src/writeMetadata
       Handler: writeMetadata.lambdaHandler
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -120,8 +112,7 @@ Resources:
         S3Event:
           Type: S3
           Properties:
-            Bucket: 
-              Ref: FileUploadBucket
+            Bucket: !Ref FileUploadBucket
             Events: s3:ObjectCreated:*
       Environment:
         Variables:
