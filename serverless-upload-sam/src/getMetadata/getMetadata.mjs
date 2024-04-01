@@ -1,3 +1,4 @@
+// This function retrieves metadata for files uploaded between a specified date range
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 const dynamoDBClient = new DynamoDBClient({ region: 'us-east-1' });
 
@@ -14,7 +15,7 @@ export const lambdaHandler = async (event) => {
                 body: JSON.stringify({ message: "Start date and end date must be provided" }),
             };
         }
-
+          
         const params = {
             TableName: process.env.TABLE_NAME,
             IndexName: 'UploadDateIndex',

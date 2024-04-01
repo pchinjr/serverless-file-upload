@@ -1,3 +1,4 @@
+// This is the Lambda function that will be triggered by the API Gateway POST request
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 const s3 = new S3Client({region: 'us-east-1'});
 

@@ -1,3 +1,4 @@
+// This function writes the metadata of the uploaded file to the DynamoDB table.
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 const dynamoDBClient = new DynamoDBClient({ region: 'us-east-1' });
 
