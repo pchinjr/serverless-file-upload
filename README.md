@@ -13,12 +13,12 @@ POST to your endpoint with Base64 encoded binary.
 curl -X POST https://wy338hkp59.execute-api.us-east-1.amazonaws.com/upload \
      -H "Content-Type: application/json" \
      -d '{
-    "filename": "example.txt",
+    "filename": "example2.txt",
     "file": "UHJhaXNlIENhZ2UhIEhhbGxvd2VkIGJ5IHRoeSBuYW1lLg==",
     "contentType": "text/plain"
 }'
 ```
 GET to your endpoint to retreive metadata
 ```bash
-curl -X GET "https://wy338hkp59.execute-api.us-east-1.amazonaws.com/prod/metadata?startDate=2024-03-22&endDate=2024-03-27"
+curl -X GET "https://wy338hkp59.execute-api.us-east-1.amazonaws.com/metadata?startDate=2024-04-01&endDate=2024-04-03"
 ```
