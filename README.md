@@ -10,15 +10,15 @@ CDK (Cloud Development Kit) is a framework that allows beginners to define and d
 ## Example Usage of APIs
 POST to your endpoint with Base64 encoded binary.
 ```bash
-curl -X POST https://gvl64a3spl.execute-api.us-east-1.amazonaws.com/prod/upload \
+curl -X POST https://wy338hkp59.execute-api.us-east-1.amazonaws.com/upload \
      -H "Content-Type: application/json" \
      -d '{
     "filename": "example.txt",
     "file": "UHJhaXNlIENhZ2UhIEhhbGxvd2VkIGJ5IHRoeSBuYW1lLg==",
     "contentType": "text/plain"
-}
+}'
 ```
 GET to your endpoint to retreive metadata
 ```bash
-curl -X GET "https://gvl64a3spl.execute-api.us-east-1.amazonaws.com/prod/metadata?startDate=2024-03-22&endDate=2024-03-27"
+curl -X GET "https://wy338hkp59.execute-api.us-east-1.amazonaws.com/prod/metadata?startDate=2024-03-22&endDate=2024-03-27"
 ```
