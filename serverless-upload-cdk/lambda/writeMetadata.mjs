@@ -2,7 +2,7 @@
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 const dynamoDBClient = new DynamoDBClient({ region: 'us-east-1' });
 
-export const handler = async (event) => {
+export const lambdaHandler = async (event) => {
     try {
         const record = event.Records[0].s3;
         const key = decodeURIComponent(record.object.key.replace(/\+/g, " "));

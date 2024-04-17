@@ -2,7 +2,7 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 const s3 = new S3Client({region: 'us-east-1'});
 
-export const handler = async (event) => {
+export const lambdaHandler = async (event) => {
     try {
         console.log(event)
         const body = JSON.parse(event.body);

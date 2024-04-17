@@ -23,7 +23,7 @@ export class ServerlessUploadCdkStack extends Stack {
     // Create a Lambda function for uploading files to S3
     const uploadFunction = new lambda.Function(this, 'uploadFunction', {
       runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'upload.handler',
+      handler: 'upload.lambdaHandler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
       environment: {
         BUCKET_NAME: uploadBucket.bucketName,
@@ -63,7 +63,7 @@ export class ServerlessUploadCdkStack extends Stack {
     // Create a Lambda function to handle S3 events
     const writeMetadataFunction = new lambda.Function(this, 'writeMetadataFunction', {
       runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'writeMetadata.handler',
+      handler: 'writeMetadata.lambdaHandler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
       environment: {
         TABLE_NAME: fileMetadataTable.tableName,
@@ -79,7 +79,7 @@ export class ServerlessUploadCdkStack extends Stack {
     // Create a Lambda function to query the file metadata by date range
     const getMetadataFunction = new lambda.Function(this, 'getMetadataFunction', {
       runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'getMetadata.handler',
+      handler: 'getMetadata.lambdaHandler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
       environment: {
         TABLE_NAME: fileMetadataTable.tableName,

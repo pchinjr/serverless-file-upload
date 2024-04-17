@@ -2,7 +2,7 @@
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 const dynamoDBClient = new DynamoDBClient({ region: 'us-east-1' });
 
-export const handler = async (event) => {
+export const lambdaHandler = async (event) => {
     try {
         // Extract query parameters from the event
         const startDate = event.queryStringParameters?.startDate; // e.g., '2023-03-20'
