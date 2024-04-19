@@ -8,15 +8,15 @@ SAM (Serverless Application Model) is a framework for building serverless applic
 CDK (Cloud Development Kit) is a framework that allows developers to define and deploy infrastructure resources using familiar programming languages, such as TypeScript, Python, and Java, instead of writing CloudFormation templates. A CDK project is comprised of stacks defined in the `/lib` folder. Stacks are compositions of constructs. Constructs are instantiaions of AWS resources declared as programming objects using the CDK API. The application entry point is in `/bin` directory. The source code of the Lambda functions are in `/lambda`. 
 
 # Terraform
-
+Terraform is an open-source infrastructure as code tool that allows you to define and provision infrastructure resources across multiple cloud providers. It uses a declarative language to describe the desired state of your infrastructure and automatically manages the creation, modification, and deletion of resources to achieve that state.
 
 ## Example Usage of APIs
 POST to your endpoint with Base64 encoded binary.
 ```bash
-curl -X POST https://wy338hkp59.execute-api.us-east-1.amazonaws.com/upload \
+curl -X POST https://wtryhgfttj.execute-api.us-east-1.amazonaws.com/prod/upload \
      -H "Content-Type: application/json" \
      -d '{
-    "filename": "example8.txt",
+    "filename": "example.txt",
     "file": "UHJhaXNlIENhZ2UhIEhhbGxvd2VkIGJ5IHRoeSBuYW1lLg==",
     "contentType": "text/plain"
 }'
