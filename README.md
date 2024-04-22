@@ -16,7 +16,7 @@ POST to your endpoint with Base64 encoded binary.
 curl -X POST https://wtryhgfttj.execute-api.us-east-1.amazonaws.com/prod/upload \
      -H "Content-Type: application/json" \
      -d '{
-    "filename": "example.txt",
+    "filename": "example2.txt",
     "file": "UHJhaXNlIENhZ2UhIEhhbGxvd2VkIGJ5IHRoeSBuYW1lLg==",
     "contentType": "text/plain"
 }'

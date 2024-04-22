@@ -6,8 +6,8 @@ resource "aws_s3_bucket" "file_upload" {
   bucket = "file-upload-${var.region}-${local.account_id}"
 }
 
-resource "aws_iam_role" "lambda_exec_role" {
-  name = "lambda_exec_role"
+resource "aws_iam_role" "lambda_s3_role" {
+  name = "lambda_s3_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -17,13 +17,14 @@ resource "aws_iam_role" "lambda_exec_role" {
       Principal = {
         Service = "lambda.amazonaws.com"
       }
-    }]
+    },
+    ]
   })
 }
 
-resource "aws_iam_role_policy" "lambda_policy" {
-  name = "lambda_exec_policy"
-  role = aws_iam_role.lambda_exec_role.id
+resource "aws_iam_role_policy" "s3_policy" {
+   name   = "s3_access_policy"
+   role = aws_iam_role.lambda_s3_role.id
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -31,19 +32,19 @@ resource "aws_iam_role_policy" "lambda_policy" {
       {
         Effect = "Allow",
         Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ],
-        Resource = "arn:aws:logs:*:*:*"
-      },
-      {
-        Effect = "Allow",
-        Action = [
           "s3:PutObject"
         ],
         Resource = "${aws_s3_bucket.file_upload.arn}/*"
-      }
+      },
+      {
+      Effect = "Allow",
+      Action = [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      Resource = "arn:aws:logs:*:*:*",
+    }
     ]
   })
 }
@@ -54,7 +55,7 @@ resource "aws_lambda_function" "upload_lambda" {
   runtime       = "nodejs20.x"     
   filename      = "${path.module}/src/upload/upload.zip"
   source_code_hash = filebase64sha256("${path.module}/src/upload/upload.zip")
-  role = aws_iam_role.lambda_exec_role.arn
+  role = aws_iam_role.lambda_s3_role.arn
   environment {
     variables = {
       BUCKET_NAME: aws_s3_bucket.file_upload.bucket
@@ -70,7 +71,7 @@ resource "aws_api_gateway_rest_api" "api" {
 resource "aws_api_gateway_resource" "api_resource" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_rest_api.api.root_resource_id
-  path_part   = "upload"  // the part of the URL
+  path_part   = "upload"
 }
 
 resource "aws_api_gateway_method" "post_method" {
@@ -106,6 +107,115 @@ resource "aws_lambda_permission" "api_lambda_permission" {
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
+}
+
+resource "aws_dynamodb_table" "file_metadata" {
+  name           = "FileMetadata"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "FileId"
+  range_key      = "UploadDate"
+
+  attribute {
+    name = "FileId"
+    type = "S"
+  }
+
+  attribute {
+    name = "UploadDate"
+    type = "S"
+  }
+
+  attribute {
+    name = "SyntheticKey"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name               = "UploadDateIndex"
+    hash_key           = "SyntheticKey"
+    range_key          = "UploadDate"
+    projection_type    = "ALL"
+  }
+}
+
+resource "aws_s3_bucket_notification" "bucket_notification" {
+  bucket = aws_s3_bucket.file_upload.bucket
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.write_metadata.arn
+    events              = ["s3:ObjectCreated:*"]
+  }
+
+  depends_on = [aws_lambda_permission.allow_s3_invocation]
+}
+
+resource "aws_lambda_permission" "allow_s3_invocation" {
+  statement_id  = "AllowExecutionFromS3"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.write_metadata.function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.file_upload.arn
+}
+
+resource "aws_iam_role" "lambda_dynamodb_role" {
+  name = "lambda_dynamodb_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "dynamodb_policy" {
+   name   = "dynamodb_access_policy"
+   role = aws_iam_role.lambda_dynamodb_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:DeleteItem"
+        ],
+        Resource = "arn:aws:dynamodb:*:*:table/${aws_dynamodb_table.file_metadata.name}"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+resource "aws_lambda_function" "write_metadata" {
+  function_name = "WriteMetadata"
+  handler       = "writeMetadata.lambdaHandler"  
+  runtime       = "nodejs20.x"     
+  filename      = "${path.module}/src/writeMetadata/writeMetadata.zip"
+  source_code_hash = filebase64sha256("${path.module}/src/writeMetadata/writeMetadata.zip")
+  role = aws_iam_role.lambda_dynamodb_role.arn
+  environment {
+    variables = {
+      TABLE_NAME = aws_dynamodb_table.file_metadata.name
+    }
+  }
 }
 
 output "api_endpoint" {
