@@ -94,10 +94,16 @@ resource "aws_api_gateway_integration" "lambda_integration" {
 resource "aws_api_gateway_deployment" "api_deployment" {
   depends_on = [
     aws_api_gateway_integration.lambda_integration,
+    aws_api_gateway_integration.lambda_metadata_integration
   ]
 
   rest_api_id = aws_api_gateway_rest_api.api.id
   stage_name  = "prod"
+
+  # Force new deployment if APIs change
+  triggers = {
+    redeployment = sha1(join(",", [jsonencode(aws_api_gateway_integration.lambda_integration), jsonencode(aws_api_gateway_integration.lambda_metadata_integration)]))
+  }
 }
 
 resource "aws_lambda_permission" "api_lambda_permission" {
@@ -182,11 +188,17 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
       {
         Effect = "Allow",
         Action = [
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ],
+        Resource = "arn:aws:dynamodb:*:*:table/${aws_dynamodb_table.file_metadata.name}/*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
           "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:UpdateItem",
-          "dynamodb:Query",
-          "dynamodb:Scan",
           "dynamodb:DeleteItem"
         ],
         Resource = "arn:aws:dynamodb:*:*:table/${aws_dynamodb_table.file_metadata.name}"
@@ -210,6 +222,51 @@ resource "aws_lambda_function" "write_metadata" {
   runtime       = "nodejs20.x"     
   filename      = "${path.module}/src/writeMetadata/writeMetadata.zip"
   source_code_hash = filebase64sha256("${path.module}/src/writeMetadata/writeMetadata.zip")
+  role = aws_iam_role.lambda_dynamodb_role.arn
+  environment {
+    variables = {
+      TABLE_NAME = aws_dynamodb_table.file_metadata.name
+    }
+  }
+}
+
+resource "aws_api_gateway_resource" "api_metadata_resource" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
+  path_part   = "metadata"
+}
+
+resource "aws_api_gateway_method" "get_method" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.api_metadata_resource.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "lambda_metadata_integration" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.api_metadata_resource.id
+  http_method = aws_api_gateway_method.get_method.http_method
+
+  integration_http_method = "POST"  // Lambda uses POST for invocations
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.get_metadata.invoke_arn
+}
+
+resource "aws_lambda_permission" "api_metadata_lambda_permission" {
+  statement_id  = "AllowAPIGatewayInvokeQuery"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.get_metadata.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*/metadata"
+}
+
+resource "aws_lambda_function" "get_metadata" {
+  function_name = "GetMetadata"
+  handler       = "getMetadata.lambdaHandler"  
+  runtime       = "nodejs20.x"     
+  filename      = "${path.module}/src/getMetadata/getMetadata.zip"
+  source_code_hash = filebase64sha256("${path.module}/src/getMetadata/getMetadata.zip")
   role = aws_iam_role.lambda_dynamodb_role.arn
   environment {
     variables = {
