@@ -24,7 +24,6 @@ AWS SSO allows you to manage access to multiple AWS accounts and business applic
 
 Now your AWS SSO credentials are set up in your Codespace, and your application can access AWS services. To use these credentials, specify the profile name when you run AWS CLI commands. For example, `aws s3 ls --profile dev`.
 
-
 # SAM (Serverless Application Model)
 SAM (Serverless Application Model) is a framework for building serverless applications on AWS, providing a simplified way to define and deploy serverless resources using AWS CloudFormation. The source code can be found in `/serverless-upload-sam`. The `template.yaml` file declares all the resources and the source code for the three Lambda functions are in `/src/`. This codespace has the SAM CLI preconfigured for install. Use IAM Identity Center to create a user for SSO login. Instructions can be found here: https://aws.amazon.com/blogs/security/how-to-create-and-manage-users-within-aws-sso/
 
@@ -33,6 +32,9 @@ CDK (Cloud Development Kit) is a framework that allows developers to define and 
 
 # Terraform
 Terraform is an open-source infrastructure as code tool that allows you to define and provision infrastructure resources across multiple cloud providers. It uses a declarative language to describe the desired state of your infrastructure and automatically manages the creation, modification, and deletion of resources to achieve that state. `main.tf` is the complete resource manifest.
+
+# Architect
+Architect is an open-source framework for serverless applications. It uses a terse manifest called `.arc` file to declare your resources. It deploys CloudFormation stacks so you can eject from Architect to native CloudFormation at any time. 
 
 # General Architecture
 This project implements a serverless file upload system using three different frameworks: SAM (Serverless Application Model), CDK (Cloud Development Kit), and Terraform. Despite the differences in the tools used, the general architecture remains the same across all implementations.
@@ -49,28 +51,43 @@ The architecture consists of the following components:
 
     - `WriteMetadataFunction`: Triggered by an S3 event when a new object is created in the S3 bucket. It writes metadata about the new object to the DynamoDB table.
 
-3. S3 Bucket: This is where the uploaded files are stored. When a new object is created in this bucket, it triggers the `WriteMetadataFunction`.
+3. S3 Bucket: This is where the uploaded files are stored. When a new object is created in this bucket, it triggers the `WriteMetadataFunction`. 
 
 4. DynamoDB Table: This is where metadata about the uploaded files is stored. The `UploadFunction` and `WriteMetadataFunction` write metadata to this table, and the `GetMetadataFunction` reads metadata from this table.
 
 5. IAM Roles: These are used to grant the necessary permissions to the Lambda functions. For example, the `UploadFunction` needs permission to write to the S3 bucket, and the `GetMetadataFunction` needs permission to read from the DynamoDB table.
+
+6. SNS Topic: The Architect framework has a native event bus that uses SNS Topics to automatically register the target Lambda. We use this to asyncronously process the file metadata instead of an S3 trigger. Same functionality with a different implementation.
 
 This architecture allows for scalable, efficient processing of file uploads and metadata retrieval. The use of serverless technologies means that you only pay for the compute time you consume, and you don't have to manage any servers.
 
 ## Example Usage of APIs
 POST to your endpoint with Base64 encoded binary.
 ```bash
-curl -X POST https://wtryhgfttj.execute-api.us-east-1.amazonaws.com/prod/upload \
+curl -X POST https://orange-umbrella-jx6p6qrrgrc9qv-3333.app.github.dev/upload \
      -H "Content-Type: application/json" \
      -d '{
-    "filename": "example3.txt",
+    "filename": "example.txt",
     "file": "UHJhaXNlIENhZ2UhIEhhbGxvd2VkIGJ5IHRoeSBuYW1lLg==",
     "contentType": "text/plain"
 }'
 ```
+```bash
+curl -X POST https://p0ery5zhc9.execute-api.us-east-1.amazonaws.com/upload \
+     -H "Content-Type: application/json" \
+     -d '{
+    "filename": "example2.txt",
+    "file": "UHJhaXNlIENhZ2UhIEhhbGxvd2VkIGJ5IHRoeSBuYW1lLg==",
+    "contentType": "text/plain"
+}'
+```
+
 GET to your endpoint to retreive metadata
 ```bash
-curl -X GET "https://wtryhgfttj.execute-api.us-east-1.amazonaws.com/prod/metadata?startDate=2024-04-01&endDate=2024-04-22"
+curl -X GET "https://orange-umbrella-jx6p6qrrgrc9qv-3333.app.github.dev/metadata?startDate=2024-04-01&endDate=2024-05-31"
+```
+```bash
+curl -X GET "https://p0ery5zhc9.execute-api.us-east-1.amazonaws.com/metadata?startDate=2024-04-01&endDate=2024-05-31"
 ```
 
 ## Encoding text to Base64
